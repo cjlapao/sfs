@@ -1,0 +1,1370 @@
+# Custom iptables for Alara Wholefoods
+# ver. 0.2.0
+# rev. 0
+# author: Carlos Lapao
+
+#Logging Rule
+#Server Specific ports
+iptables -A INPUT -i ppp0 -p tcp --dport 389 -j ACCEPT                                                # LDAP Access
+iptables -A INPUT -i ppp0 -p tcp --dport 636 -j ACCEPT                                                # LDAPs Access
+iptables -A INPUT -i ppp0 -p tcp --dport 1194 -j ACCEPT                                               # OpenVPN TCP Access
+iptables -A INPUT -i ppp0 -p udp --dport 1194 -j ACCEPT                                               # OpenVPN UDP Access
+iptables -A INPUT -i ppp0 -p tcp --dport 22 -j ACCEPT                                                 # SSH Server Accept
+iptables -A INPUT -i ppp0 -p tcp --dport 21 -j ACCEPT                                                 # FTP Server Accept
+iptables -A INPUT -i ppp0 -p tcp --dport 2121 -j ACCEPT                                               # FTP Server Accept
+iptables -A INPUT -i ppp0 -p tcp --dport 81 -j ACCEPT                                                 # ClearOS Webmin Accept
+iptables -A INPUT -i ppp0 -p tcp --dport 3306 -j ACCEPT                                               # MySQL Server Access
+#TeamSpeak3 Rules
+iptables -A PREROUTING -t nat -p udp --dport 9987 -j DNAT --to 192.168.1.15                           # Teamspeak3 UDP
+iptables -A FORWARD -p udp -d 192.168.1.15 --dport 9987 -j ACCEPT                                     # Teamspeak3 UDP
+iptables -A PREROUTING -t nat -p tcpport 10011 -j DNAT --to 192.168.1.15 			                        # Teaspeak3 TCP 10011
+iptables -A FORWARD -p tcp -d 192.168.1.15 --dport 10011 -j ACCEPT 				                            # Teamspeak3 TCP 10011
+iptables -a PREROUTING -t nat -p tcp --dport 30033 -j DNAT --to 192.168.1.15 			                    # TeamSpeak TCP 30033
+iptables -A FORWARD -p tcp -d 192.168.1.15 --dport 30033 -j ACCEPT 				                            # Teamspeak3 TCP 30033
+#Minecraft Server Rules
+iptables -t nat -A PREROUTING -p tcp -i ppp0 --dport 8087 -j DNAT --to-destination 192.168.1.15:8080              # [PREROUTING] SMTP Server
+iptables -A FORWARD -p tcp -d 192.168.1.15 --dport 8080 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT           # [FORWARD] SMTP Server
+iptables -I PREROUTING -t nat -p tcp --dport 8022 -j DNAT --to 192.168.1.15:22 			                  # Minecraft SSH
+iptables -I FORWARD -p tcp -d 192.168.1.15 --dport 22 -j ACCEPT 				                              # Minecraft SSH
+iptables -I PREROUTING -t nat -p tcp -m tcp --dport 25565:25575 -j DNAT --to 192.168.1.15             # Minecraft Servers Range
+iptables -I FORWARD -p tcp -m tcp -d 192.168.1.15 --dport 25565:25575 -j ACCEPT 		                  # Minecraft Servers Range
+#Alara MTA
+iptables -t nat -A PREROUTING -p tcp -i ppp0 --dport 25 -j DNAT --to-destination 192.168.1.2:25                     # [PREROUTING] SMTP Server
+iptables -A FORWARD -p tcp -d 192.168.1.2 --dport 25 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT             # [FORWARD] SMTP Server
+iptables -t nat -A PREROUTING -p tcp -i ppp0 --dport 465 -j DNAT --to-destination 192.168.1.2:465                   # [PREROUTING] SMTPs Server
+iptables -A FORWARD -p tcp -d 192.168.1.2 --dport 465 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT            # [FORWARD] SMTPs Server
+iptables -t nat -A PREROUTING -p tcp -i ppp0 --dport 110 -j DNAT --to-destination 192.168.1.2:110                   # [PREROUTING] POP3 Server
+iptables -A FORWARD -p tcp -d 192.168.1.2 --dport 110 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT            # [FORWARD] POP3 Server
+iptables -t nat -A PREROUTING -p tcp -i ppp0 --dport 995 -j DNAT --to-destination 192.168.1.2:995                   # [PREROUTING] POP3s Server
+iptables -A FORWARD -p tcp -d 192.168.1.2 --dport 995 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT            # [FORWARD] POP3s Server
+iptables -t nat -A PREROUTING -p tcp -i ppp0 --dport 587 -j DNAT --to-destination 192.168.1.2:587                   # [PREROUTING] Submission Server
+iptables -A FORWARD -p tcp -d 192.168.1.2 --dport 587 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT            # [FORWARD] Submission Server
+iptables -t nat -A PREROUTING -p tcp -i ppp0 --dport 143 -j DNAT --to-destination 192.168.1.2:143                   # [PREROUTING] IMAP Server
+iptables -A FORWARD -p tcp -d 192.168.1.2 --dport 143 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT            # [FORWARD] IMAP Server
+iptables -t nat -A PREROUTING -p tcp -i ppp0 --dport 983 -j DNAT --to-destination 192.168.1.2:983                   # [PREROUTING] IMAPs Server
+iptables -A FORWARD -p tcp -d 192.168.1.2 --dport 983 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT            # [FORWARD] IMAPs Server
+iptables -t nat -A PREROUTING -p tcp -i ppp0 --dport 8081 -j DNAT --to-destination 192.168.1.2:80                   # [PREROUTING] Web Server
+iptables -A FORWARD -p tcp -d 192.168.1.2 --dport 80 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT           # [FORWARD] Web Server
+iptables -t nat -A PREROUTING -p tcp -i ppp0 --dport 8023 -j DNAT --to-destination 192.168.1.2:22                   # [PREROUTING] SSH Server
+iptables -A FORWARD -p tcp -d 192.168.1.2 --dport 22 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT           # [FORWARD] SSH Server
+#Windows Remote Desktop for all computers
+iptables -A PREROUTING -t nat -p tcp --dport 3390 -j DNAT --to 192.168.1.11:3390                      # Katrina Smith RDP
+iptables -A FORWARD -p tcp -d 192.168.1.11 --dport 3390 -j ACCEPT                                     # Katrina Smith RDP
+iptables -t nat -A PREROUTING -p tcp --dport 3391 -j DNAT --to 192.168.1.104:3389                     # [PREROUTING] SMTP Server
+iptables -A FORWARD -p tcp -d 192.168.1.104 --dport 3389 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT             # [FORWARD] SMTP Server
+iptables -A PREROUTING -t nat -p tcp --dport 3389 -j DNAT --to 192.168.1.10                           # Alex Smith RDP
+iptables -A FORWARD -p tcp -d 192.168.1.10 --dport 3389 -j ACCEPT                                     # Alex Smith RDP
+iptables -A PREROUTING -t nat -p tcp --dport 3388 -j DNAT --to 192.168.1.8:3389                       # Katrina RDP
+iptables -A FORWARD -p tcp -d 192.168.1.8 --dport 3389 -j ACCEPT                                      # Katrina RDP
+#Alara NVR
+iptables -A PREROUTING -t nat -p tcp --dport 8082 -j DNAT --to 192.168.1.7:8086                       # Katrina RDP
+iptables -A FORWARD -p tcp -d 192.168.1.7 --dport 8086 -j ACCEPT   
+iptables -A PREROUTING -t nat -p tcp --dport 3557 -j DNAT --to 192.168.1.7:3557                       # Katrina RDP
+iptables -A FORWARD -p tcp -d 192.168.1.7 --dport 3557 -j ACCEPT   
+iptables -I OUTPUT -p tcp --dport 25 -j LOG --log-prefix '[SMTP OUTGOING]'
+iptables -I INPUT -s 191.250.2.36 -j DROP
+iptables -I INPUT -s 191.250.2.36 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 43.229.53.16 -j DROP
+iptables -I INPUT -s 43.229.53.16 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 179.182.227.26 -j DROP
+iptables -I INPUT -s 179.182.227.26 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 195.154.71.4 -j DROP
+iptables -I INPUT -s 195.154.71.4 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 115.196.83.135 -j DROP
+iptables -I INPUT -s 115.196.83.135 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 62.210.74.77 -j DROP
+iptables -I INPUT -s 62.210.74.77 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 195.154.136.246 -j DROP
+iptables -I INPUT -s 195.154.136.246 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 61.188.189.7 -j DROP
+iptables -I INPUT -s 61.188.189.7 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 62.210.220.216 -j DROP
+iptables -I INPUT -s 62.210.220.216 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 62.210.192.233 -j DROP
+iptables -I INPUT -s 62.210.192.233 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 188.120.234.187 -j DROP
+iptables -I INPUT -s 188.120.234.187 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 5.8.66.90 -j DROP
+iptables -I INPUT -s 5.8.66.90 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 195.154.102.105 -j DROP
+iptables -I INPUT -s 195.154.102.105 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 107.150.19.109 -j DROP
+iptables -I INPUT -s 107.150.19.109 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 195.154.102.107 -j DROP
+iptables -I INPUT -s 195.154.102.107 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 62.210.105.96 -j DROP
+iptables -I INPUT -s 62.210.105.96 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 62.210.74.109 -j DROP
+iptables -I INPUT -s 62.210.74.109 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 62.210.74.97 -j DROP
+iptables -I INPUT -s 62.210.74.97 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 211.94.189.86 -j DROP
+iptables -I INPUT -s 211.94.189.86 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 62.210.73.73 -j DROP
+iptables -I INPUT -s 62.210.73.73 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 91.210.104.86 -j DROP
+iptables -I INPUT -s 91.210.104.86 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 62.210.74.168 -j DROP
+iptables -I INPUT -s 62.210.74.168 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 195.154.102.109 -j DROP
+iptables -I INPUT -s 195.154.102.109 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 5.8.66.78 -j DROP
+iptables -I INPUT -s 5.8.66.78 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 62.210.37.46 -j DROP
+iptables -I INPUT -s 62.210.37.46 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 124.31.218.56 -j DROP
+iptables -I INPUT -s 124.31.218.56 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 195.154.102.101 -j DROP
+iptables -I INPUT -s 195.154.102.101 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 203.129.114.106 -j DROP
+iptables -I INPUT -s 203.129.114.106 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 188.227.175.218 -j DROP
+iptables -I INPUT -s 188.227.175.218 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.253.221.8 -j DROP
+iptables -I INPUT -s 117.253.221.8 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 180.151.40.251 -j DROP
+iptables -I INPUT -s 180.151.40.251 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 188.11.60.125 -j DROP
+iptables -I INPUT -s 188.11.60.125 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 186.216.250.76 -j DROP
+iptables -I INPUT -s 186.216.250.76 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.245.10.71 -j DROP
+iptables -I INPUT -s 117.245.10.71 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 186.216.250.85 -j DROP
+iptables -I INPUT -s 186.216.250.85 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.253.232.6 -j DROP
+iptables -I INPUT -s 117.253.232.6 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 177.130.52.187 -j DROP
+iptables -I INPUT -s 177.130.52.187 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 112.196.154.130 -j DROP
+iptables -I INPUT -s 112.196.154.130 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 186.216.247.191 -j DROP
+iptables -I INPUT -s 186.216.247.191 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 196.207.94.19 -j DROP
+iptables -I INPUT -s 196.207.94.19 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.245.15.134 -j DROP
+iptables -I INPUT -s 117.245.15.134 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 110.36.14.107 -j DROP
+iptables -I INPUT -s 110.36.14.107 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 95.66.143.2 -j DROP
+iptables -I INPUT -s 95.66.143.2 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 94.231.123.9 -j DROP
+iptables -I INPUT -s 94.231.123.9 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 109.161.226.120 -j DROP
+iptables -I INPUT -s 109.161.226.120 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.245.7.117 -j DROP
+iptables -I INPUT -s 117.245.7.117 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 186.216.247.165 -j DROP
+iptables -I INPUT -s 186.216.247.165 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 177.19.171.151 -j DROP
+iptables -I INPUT -s 177.19.171.151 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 109.161.204.182 -j DROP
+iptables -I INPUT -s 109.161.204.182 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.245.11.249 -j DROP
+iptables -I INPUT -s 117.245.11.249 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 182.74.67.177 -j DROP
+iptables -I INPUT -s 182.74.67.177 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 109.161.220.117 -j DROP
+iptables -I INPUT -s 109.161.220.117 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 177.99.211.205 -j DROP
+iptables -I INPUT -s 177.99.211.205 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.253.106.120 -j DROP
+iptables -I INPUT -s 117.253.106.120 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 190.15.36.7 -j DROP
+iptables -I INPUT -s 190.15.36.7 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.253.210.215 -j DROP
+iptables -I INPUT -s 117.253.210.215 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.253.104.169 -j DROP
+iptables -I INPUT -s 117.253.104.169 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 188.120.226.162 -j DROP
+iptables -I INPUT -s 188.120.226.162 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 109.161.203.122 -j DROP
+iptables -I INPUT -s 109.161.203.122 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 177.130.57.79 -j DROP
+iptables -I INPUT -s 177.130.57.79 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 43.254.12.72 -j DROP
+iptables -I INPUT -s 43.254.12.72 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.253.156.92 -j DROP
+iptables -I INPUT -s 117.253.156.92 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.255.208.224 -j DROP
+iptables -I INPUT -s 117.255.208.224 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.255.239.156 -j DROP
+iptables -I INPUT -s 117.255.239.156 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 77.39.11.243 -j DROP
+iptables -I INPUT -s 77.39.11.243 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.253.161.255 -j DROP
+iptables -I INPUT -s 117.253.161.255 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 177.130.59.143 -j DROP
+iptables -I INPUT -s 177.130.59.143 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 138.99.89.246 -j DROP
+iptables -I INPUT -s 138.99.89.246 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 31.173.248.32 -j DROP
+iptables -I INPUT -s 31.173.248.32 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 93.63.253.10 -j DROP
+iptables -I INPUT -s 93.63.253.10 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 14.141.13.42 -j DROP
+iptables -I INPUT -s 14.141.13.42 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 189.51.112.88 -j DROP
+iptables -I INPUT -s 189.51.112.88 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.253.106.111 -j DROP
+iptables -I INPUT -s 117.253.106.111 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 78.4.86.210 -j DROP
+iptables -I INPUT -s 78.4.86.210 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 109.161.198.37 -j DROP
+iptables -I INPUT -s 109.161.198.37 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.253.221.221 -j DROP
+iptables -I INPUT -s 117.253.221.221 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 109.161.238.241 -j DROP
+iptables -I INPUT -s 109.161.238.241 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.253.184.123 -j DROP
+iptables -I INPUT -s 117.253.184.123 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.253.205.49 -j DROP
+iptables -I INPUT -s 117.253.205.49 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 103.254.175.209 -j DROP
+iptables -I INPUT -s 103.254.175.209 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.253.185.229 -j DROP
+iptables -I INPUT -s 117.253.185.229 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.253.216.81 -j DROP
+iptables -I INPUT -s 117.253.216.81 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.244.26.10 -j DROP
+iptables -I INPUT -s 117.244.26.10 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 85.26.188.54 -j DROP
+iptables -I INPUT -s 85.26.188.54 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.211.151.47 -j DROP
+iptables -I INPUT -s 117.211.151.47 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 43.225.214.131 -j DROP
+iptables -I INPUT -s 43.225.214.131 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.245.76.2 -j DROP
+iptables -I INPUT -s 117.245.76.2 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 220.227.147.150 -j DROP
+iptables -I INPUT -s 220.227.147.150 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.245.72.3 -j DROP
+iptables -I INPUT -s 117.245.72.3 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 202.191.204.180 -j DROP
+iptables -I INPUT -s 202.191.204.180 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 80.85.244.232 -j DROP
+iptables -I INPUT -s 80.85.244.232 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 31.173.248.60 -j DROP
+iptables -I INPUT -s 31.173.248.60 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 94.180.249.102 -j DROP
+iptables -I INPUT -s 94.180.249.102 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 178.234.35.26 -j DROP
+iptables -I INPUT -s 178.234.35.26 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 186.216.247.194 -j DROP
+iptables -I INPUT -s 186.216.247.194 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 78.111.83.142 -j DROP
+iptables -I INPUT -s 78.111.83.142 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 151.99.166.243 -j DROP
+iptables -I INPUT -s 151.99.166.243 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.253.220.242 -j DROP
+iptables -I INPUT -s 117.253.220.242 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 31.197.145.82 -j DROP
+iptables -I INPUT -s 31.197.145.82 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 177.43.247.17 -j DROP
+iptables -I INPUT -s 177.43.247.17 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.244.25.162 -j DROP
+iptables -I INPUT -s 117.244.25.162 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 177.19.176.5 -j DROP
+iptables -I INPUT -s 177.19.176.5 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 103.56.69.255 -j DROP
+iptables -I INPUT -s 103.56.69.255 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 109.161.225.188 -j DROP
+iptables -I INPUT -s 109.161.225.188 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 109.161.247.226 -j DROP
+iptables -I INPUT -s 109.161.247.226 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.245.41.227 -j DROP
+iptables -I INPUT -s 117.245.41.227 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 189.51.117.134 -j DROP
+iptables -I INPUT -s 189.51.117.134 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 109.161.227.146 -j DROP
+iptables -I INPUT -s 109.161.227.146 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 186.216.247.106 -j DROP
+iptables -I INPUT -s 186.216.247.106 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 189.51.108.47 -j DROP
+iptables -I INPUT -s 189.51.108.47 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 109.161.243.251 -j DROP
+iptables -I INPUT -s 109.161.243.251 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 85.172.11.138 -j DROP
+iptables -I INPUT -s 85.172.11.138 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 198.74.100.10 -j DROP
+iptables -I INPUT -s 198.74.100.10 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 158.69.200.58 -j DROP
+iptables -I INPUT -s 158.69.200.58 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 31.184.195.111 -j DROP
+iptables -I INPUT -s 31.184.195.111 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 151.80.25.88 -j DROP
+iptables -I INPUT -s 151.80.25.88 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 60.182.179.234 -j DROP
+iptables -I INPUT -s 60.182.179.234 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 27.254.67.185 -j DROP
+iptables -I INPUT -s 27.254.67.185 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 84.166.1.144 -j DROP
+iptables -I INPUT -s 84.166.1.144 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 62.210.74.67 -j DROP
+iptables -I INPUT -s 62.210.74.67 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 62.210.220.202 -j DROP
+iptables -I INPUT -s 62.210.220.202 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 62.210.36.2 -j DROP
+iptables -I INPUT -s 62.210.36.2 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 178.73.218.212 -j DROP
+iptables -I INPUT -s 178.73.218.212 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 195.154.102.103 -j DROP
+iptables -I INPUT -s 195.154.102.103 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 62.210.192.223 -j DROP
+iptables -I INPUT -s 62.210.192.223 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 104.193.95.16 -j DROP
+iptables -I INPUT -s 104.193.95.16 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 43.229.53.53 -j DROP
+iptables -I INPUT -s 43.229.53.53 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 193.104.41.54 -j DROP
+iptables -I INPUT -s 193.104.41.54 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 62.210.76.130 -j DROP
+iptables -I INPUT -s 62.210.76.130 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 212.83.129.115 -j DROP
+iptables -I INPUT -s 212.83.129.115 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 62.210.37.50 -j DROP
+iptables -I INPUT -s 62.210.37.50 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 46.148.16.98 -j DROP
+iptables -I INPUT -s 46.148.16.98 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 193.189.117.120 -j DROP
+iptables -I INPUT -s 193.189.117.120 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 222.186.42.161 -j DROP
+iptables -I INPUT -s 222.186.42.161 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 110.39.140.56 -j DROP
+iptables -I INPUT -s 110.39.140.56 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.211.151.33 -j DROP
+iptables -I INPUT -s 117.211.151.33 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 186.216.250.120 -j DROP
+iptables -I INPUT -s 186.216.250.120 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 218.29.231.25 -j DROP
+iptables -I INPUT -s 218.29.231.25 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 62.210.73.77 -j DROP
+iptables -I INPUT -s 62.210.73.77 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 182.74.20.14 -j DROP
+iptables -I INPUT -s 182.74.20.14 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 195.154.136.248 -j DROP
+iptables -I INPUT -s 195.154.136.248 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 187.33.199.117 -j DROP
+iptables -I INPUT -s 187.33.199.117 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 79.139.131.99 -j DROP
+iptables -I INPUT -s 79.139.131.99 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 187.17.25.183 -j DROP
+iptables -I INPUT -s 187.17.25.183 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 122.15.17.186 -j DROP
+iptables -I INPUT -s 122.15.17.186 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.253.176.216 -j DROP
+iptables -I INPUT -s 117.253.176.216 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 177.99.211.181 -j DROP
+iptables -I INPUT -s 177.99.211.181 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 202.62.70.58 -j DROP
+iptables -I INPUT -s 202.62.70.58 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.245.9.199 -j DROP
+iptables -I INPUT -s 117.245.9.199 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 62.210.192.225 -j DROP
+iptables -I INPUT -s 62.210.192.225 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.253.191.27 -j DROP
+iptables -I INPUT -s 117.253.191.27 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 220.225.7.34 -j DROP
+iptables -I INPUT -s 220.225.7.34 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 213.203.130.227 -j DROP
+iptables -I INPUT -s 213.203.130.227 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.253.181.247 -j DROP
+iptables -I INPUT -s 117.253.181.247 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.253.205.207 -j DROP
+iptables -I INPUT -s 117.253.205.207 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.253.244.38 -j DROP
+iptables -I INPUT -s 117.253.244.38 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 177.221.229.97 -j DROP
+iptables -I INPUT -s 177.221.229.97 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 187.45.103.143 -j DROP
+iptables -I INPUT -s 187.45.103.143 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.243.196.104 -j DROP
+iptables -I INPUT -s 117.243.196.104 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 109.161.219.72 -j DROP
+iptables -I INPUT -s 109.161.219.72 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.255.249.112 -j DROP
+iptables -I INPUT -s 117.255.249.112 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 181.56.253.25 -j DROP
+iptables -I INPUT -s 181.56.253.25 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 179.145.190.25 -j DROP
+iptables -I INPUT -s 179.145.190.25 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 220.225.7.25 -j DROP
+iptables -I INPUT -s 220.225.7.25 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 177.72.18.199 -j DROP
+iptables -I INPUT -s 177.72.18.199 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 177.87.168.73 -j DROP
+iptables -I INPUT -s 177.87.168.73 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 79.139.156.76 -j DROP
+iptables -I INPUT -s 79.139.156.76 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 200.149.1.129 -j DROP
+iptables -I INPUT -s 200.149.1.129 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.244.24.144 -j DROP
+iptables -I INPUT -s 117.244.24.144 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 177.73.119.222 -j DROP
+iptables -I INPUT -s 177.73.119.222 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 186.216.247.71 -j DROP
+iptables -I INPUT -s 186.216.247.71 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.253.179.161 -j DROP
+iptables -I INPUT -s 117.253.179.161 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 179.216.169.70 -j DROP
+iptables -I INPUT -s 179.216.169.70 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.253.224.87 -j DROP
+iptables -I INPUT -s 117.253.224.87 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 182.72.55.42 -j DROP
+iptables -I INPUT -s 182.72.55.42 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.253.230.244 -j DROP
+iptables -I INPUT -s 117.253.230.244 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.253.237.20 -j DROP
+iptables -I INPUT -s 117.253.237.20 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 182.73.58.133 -j DROP
+iptables -I INPUT -s 182.73.58.133 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 188.234.139.29 -j DROP
+iptables -I INPUT -s 188.234.139.29 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 177.43.251.147 -j DROP
+iptables -I INPUT -s 177.43.251.147 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 195.239.35.115 -j DROP
+iptables -I INPUT -s 195.239.35.115 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 177.11.17.76 -j DROP
+iptables -I INPUT -s 177.11.17.76 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.253.99.81 -j DROP
+iptables -I INPUT -s 117.253.99.81 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 124.125.254.19 -j DROP
+iptables -I INPUT -s 124.125.254.19 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 62.210.105.98 -j DROP
+iptables -I INPUT -s 62.210.105.98 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 189.89.220.95 -j DROP
+iptables -I INPUT -s 189.89.220.95 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 193.107.17.72 -j DROP
+iptables -I INPUT -s 193.107.17.72 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 186.216.250.67 -j DROP
+iptables -I INPUT -s 186.216.250.67 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 182.73.201.178 -j DROP
+iptables -I INPUT -s 182.73.201.178 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.253.97.119 -j DROP
+iptables -I INPUT -s 117.253.97.119 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 182.75.135.154 -j DROP
+iptables -I INPUT -s 182.75.135.154 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.244.24.100 -j DROP
+iptables -I INPUT -s 117.244.24.100 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 150.145.57.181 -j DROP
+iptables -I INPUT -s 150.145.57.181 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.255.208.66 -j DROP
+iptables -I INPUT -s 117.255.208.66 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 109.111.147.42 -j DROP
+iptables -I INPUT -s 109.111.147.42 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 177.221.229.89 -j DROP
+iptables -I INPUT -s 177.221.229.89 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 109.161.215.136 -j DROP
+iptables -I INPUT -s 109.161.215.136 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 201.2.57.131 -j DROP
+iptables -I INPUT -s 201.2.57.131 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 189.58.247.17 -j DROP
+iptables -I INPUT -s 189.58.247.17 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 220.225.7.30 -j DROP
+iptables -I INPUT -s 220.225.7.30 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 201.47.96.229 -j DROP
+iptables -I INPUT -s 201.47.96.229 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 91.78.161.82 -j DROP
+iptables -I INPUT -s 91.78.161.82 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 109.161.205.77 -j DROP
+iptables -I INPUT -s 109.161.205.77 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 122.184.141.8 -j DROP
+iptables -I INPUT -s 122.184.141.8 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 182.70.214.31 -j DROP
+iptables -I INPUT -s 182.70.214.31 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 191.27.177.46 -j DROP
+iptables -I INPUT -s 191.27.177.46 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 91.219.66.106 -j DROP
+iptables -I INPUT -s 91.219.66.106 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.253.186.239 -j DROP
+iptables -I INPUT -s 117.253.186.239 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.244.30.173 -j DROP
+iptables -I INPUT -s 117.244.30.173 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 187.103.63.56 -j DROP
+iptables -I INPUT -s 187.103.63.56 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 200.251.131.186 -j DROP
+iptables -I INPUT -s 200.251.131.186 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 122.180.71.100 -j DROP
+iptables -I INPUT -s 122.180.71.100 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 182.72.70.158 -j DROP
+iptables -I INPUT -s 182.72.70.158 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 187.11.114.42 -j DROP
+iptables -I INPUT -s 187.11.114.42 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 177.130.61.79 -j DROP
+iptables -I INPUT -s 177.130.61.79 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 202.165.235.57 -j DROP
+iptables -I INPUT -s 202.165.235.57 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 109.161.229.229 -j DROP
+iptables -I INPUT -s 109.161.229.229 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 187.84.172.50 -j DROP
+iptables -I INPUT -s 187.84.172.50 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.253.244.228 -j DROP
+iptables -I INPUT -s 117.253.244.228 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 189.112.216.128 -j DROP
+iptables -I INPUT -s 189.112.216.128 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 186.216.247.139 -j DROP
+iptables -I INPUT -s 186.216.247.139 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 186.219.141.213 -j DROP
+iptables -I INPUT -s 186.219.141.213 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 93.189.144.14 -j DROP
+iptables -I INPUT -s 93.189.144.14 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 177.92.167.239 -j DROP
+iptables -I INPUT -s 177.92.167.239 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 103.24.173.51 -j DROP
+iptables -I INPUT -s 103.24.173.51 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 193.34.11.214 -j DROP
+iptables -I INPUT -s 193.34.11.214 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 186.235.98.63 -j DROP
+iptables -I INPUT -s 186.235.98.63 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.253.212.102 -j DROP
+iptables -I INPUT -s 117.253.212.102 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 177.204.40.174 -j DROP
+iptables -I INPUT -s 177.204.40.174 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.245.11.26 -j DROP
+iptables -I INPUT -s 117.245.11.26 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.253.153.255 -j DROP
+iptables -I INPUT -s 117.253.153.255 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 187.34.82.123 -j DROP
+iptables -I INPUT -s 187.34.82.123 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 109.161.215.98 -j DROP
+iptables -I INPUT -s 109.161.215.98 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 177.73.117.20 -j DROP
+iptables -I INPUT -s 177.73.117.20 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 189.58.247.19 -j DROP
+iptables -I INPUT -s 189.58.247.19 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 200.9.71.166 -j DROP
+iptables -I INPUT -s 200.9.71.166 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 221.120.227.81 -j DROP
+iptables -I INPUT -s 221.120.227.81 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.253.206.225 -j DROP
+iptables -I INPUT -s 117.253.206.225 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 109.161.203.93 -j DROP
+iptables -I INPUT -s 109.161.203.93 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 211.140.18.230 -j DROP
+iptables -I INPUT -s 211.140.18.230 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 109.161.193.210 -j DROP
+iptables -I INPUT -s 109.161.193.210 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 177.71.6.235 -j DROP
+iptables -I INPUT -s 177.71.6.235 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 131.255.82.52 -j DROP
+iptables -I INPUT -s 131.255.82.52 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.245.47.14 -j DROP
+iptables -I INPUT -s 117.245.47.14 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 62.210.74.205 -j DROP
+iptables -I INPUT -s 62.210.74.205 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 186.216.247.51 -j DROP
+iptables -I INPUT -s 186.216.247.51 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 187.49.206.246 -j DROP
+iptables -I INPUT -s 187.49.206.246 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.245.72.96 -j DROP
+iptables -I INPUT -s 117.245.72.96 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 62.210.220.208 -j DROP
+iptables -I INPUT -s 62.210.220.208 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 187.102.148.222 -j DROP
+iptables -I INPUT -s 187.102.148.222 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 109.161.199.167 -j DROP
+iptables -I INPUT -s 109.161.199.167 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.253.154.190 -j DROP
+iptables -I INPUT -s 117.253.154.190 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.253.216.23 -j DROP
+iptables -I INPUT -s 117.253.216.23 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 113.175.99.170 -j DROP
+iptables -I INPUT -s 113.175.99.170 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 124.109.61.38 -j DROP
+iptables -I INPUT -s 124.109.61.38 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 124.109.61.51 -j DROP
+iptables -I INPUT -s 124.109.61.51 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 177.86.34.129 -j DROP
+iptables -I INPUT -s 177.86.34.129 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 201.76.172.86 -j DROP
+iptables -I INPUT -s 201.76.172.86 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 62.210.220.204 -j DROP
+iptables -I INPUT -s 62.210.220.204 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 177.130.59.199 -j DROP
+iptables -I INPUT -s 177.130.59.199 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 188.116.134.98 -j DROP
+iptables -I INPUT -s 188.116.134.98 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 62.210.220.212 -j DROP
+iptables -I INPUT -s 62.210.220.212 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 158.69.205.202 -j DROP
+iptables -I INPUT -s 158.69.205.202 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 61.241.82.125 -j DROP
+iptables -I INPUT -s 61.241.82.125 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 222.186.21.198 -j DROP
+iptables -I INPUT -s 222.186.21.198 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.253.244.100 -j DROP
+iptables -I INPUT -s 117.253.244.100 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 177.130.49.219 -j DROP
+iptables -I INPUT -s 177.130.49.219 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 62.210.37.48 -j DROP
+iptables -I INPUT -s 62.210.37.48 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 169.229.3.91 -j DROP
+iptables -I INPUT -s 169.229.3.91 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 110.39.28.45 -j DROP
+iptables -I INPUT -s 110.39.28.45 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 210.151.42.216 -j DROP
+iptables -I INPUT -s 210.151.42.216 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 221.203.142.71 -j DROP
+iptables -I INPUT -s 221.203.142.71 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 173.254.203.88 -j DROP
+iptables -I INPUT -s 173.254.203.88 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 103.16.143.112 -j DROP
+iptables -I INPUT -s 103.16.143.112 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 111.74.238.7 -j DROP
+iptables -I INPUT -s 111.74.238.7 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 222.186.21.71 -j DROP
+iptables -I INPUT -s 222.186.21.71 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 118.139.182.42 -j DROP
+iptables -I INPUT -s 118.139.182.42 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 115.226.225.154 -j DROP
+iptables -I INPUT -s 115.226.225.154 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 210.172.2.213 -j DROP
+iptables -I INPUT -s 210.172.2.213 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 206.191.151.226 -j DROP
+iptables -I INPUT -s 206.191.151.226 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 178.73.219.17 -j DROP
+iptables -I INPUT -s 178.73.219.17 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 62.210.220.214 -j DROP
+iptables -I INPUT -s 62.210.220.214 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 113.160.248.120 -j DROP
+iptables -I INPUT -s 113.160.248.120 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 62.210.220.206 -j DROP
+iptables -I INPUT -s 62.210.220.206 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 91.193.74.10 -j DROP
+iptables -I INPUT -s 91.193.74.10 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 103.243.107.56 -j DROP
+iptables -I INPUT -s 103.243.107.56 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 62.210.36.4 -j DROP
+iptables -I INPUT -s 62.210.36.4 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 187.85.208.110 -j DROP
+iptables -I INPUT -s 187.85.208.110 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 218.244.135.52 -j DROP
+iptables -I INPUT -s 218.244.135.52 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 182.72.149.230 -j DROP
+iptables -I INPUT -s 182.72.149.230 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 109.161.194.61 -j DROP
+iptables -I INPUT -s 109.161.194.61 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 109.161.203.135 -j DROP
+iptables -I INPUT -s 109.161.203.135 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.255.251.28 -j DROP
+iptables -I INPUT -s 117.255.251.28 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 187.84.90.114 -j DROP
+iptables -I INPUT -s 187.84.90.114 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 109.161.192.240 -j DROP
+iptables -I INPUT -s 109.161.192.240 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 109.161.196.43 -j DROP
+iptables -I INPUT -s 109.161.196.43 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.253.168.222 -j DROP
+iptables -I INPUT -s 117.253.168.222 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.253.169.235 -j DROP
+iptables -I INPUT -s 117.253.169.235 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 104.236.24.45 -j DROP
+iptables -I INPUT -s 104.236.24.45 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 113.195.145.85 -j DROP
+iptables -I INPUT -s 113.195.145.85 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 179.191.133.212 -j DROP
+iptables -I INPUT -s 179.191.133.212 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 109.161.231.38 -j DROP
+iptables -I INPUT -s 109.161.231.38 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 115.47.26.53 -j DROP
+iptables -I INPUT -s 115.47.26.53 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 188.138.102.231 -j DROP
+iptables -I INPUT -s 188.138.102.231 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 187.17.201.58 -j DROP
+iptables -I INPUT -s 187.17.201.58 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 211.149.174.81 -j DROP
+iptables -I INPUT -s 211.149.174.81 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 58.218.211.198 -j DROP
+iptables -I INPUT -s 58.218.211.198 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 194.63.141.110 -j DROP
+iptables -I INPUT -s 194.63.141.110 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 36.84.248.8 -j DROP
+iptables -I INPUT -s 36.84.248.8 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 208.180.242.165 -j DROP
+iptables -I INPUT -s 208.180.242.165 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 37.97.129.89 -j DROP
+iptables -I INPUT -s 37.97.129.89 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 185.7.81.82 -j DROP
+iptables -I INPUT -s 185.7.81.82 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 14.162.80.115 -j DROP
+iptables -I INPUT -s 14.162.80.115 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 178.73.218.228 -j DROP
+iptables -I INPUT -s 178.73.218.228 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 187.19.101.110 -j DROP
+iptables -I INPUT -s 187.19.101.110 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 5.39.58.71 -j DROP
+iptables -I INPUT -s 5.39.58.71 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 190.146.1.187 -j DROP
+iptables -I INPUT -s 190.146.1.187 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 120.26.74.62 -j DROP
+iptables -I INPUT -s 120.26.74.62 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 54.237.38.3 -j DROP
+iptables -I INPUT -s 54.237.38.3 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 37.49.226.136 -j DROP
+iptables -I INPUT -s 37.49.226.136 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 113.162.79.98 -j DROP
+iptables -I INPUT -s 113.162.79.98 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 60.173.14.142 -j DROP
+iptables -I INPUT -s 60.173.14.142 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 111.119.51.187 -j DROP
+iptables -I INPUT -s 111.119.51.187 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 101.254.166.148 -j DROP
+iptables -I INPUT -s 101.254.166.148 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 131.72.106.109 -j DROP
+iptables -I INPUT -s 131.72.106.109 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 61.188.189.8 -j DROP
+iptables -I INPUT -s 61.188.189.8 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 2.35.156.157 -j DROP
+iptables -I INPUT -s 2.35.156.157 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 188.15.100.80 -j DROP
+iptables -I INPUT -s 188.15.100.80 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 186.216.247.120 -j DROP
+iptables -I INPUT -s 186.216.247.120 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 138.99.91.52 -j DROP
+iptables -I INPUT -s 138.99.91.52 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 91.232.157.102 -j DROP
+iptables -I INPUT -s 91.232.157.102 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 186.216.247.112 -j DROP
+iptables -I INPUT -s 186.216.247.112 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 46.138.50.89 -j DROP
+iptables -I INPUT -s 46.138.50.89 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 193.41.76.5 -j DROP
+iptables -I INPUT -s 193.41.76.5 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.245.44.162 -j DROP
+iptables -I INPUT -s 117.245.44.162 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 77.43.61.43 -j DROP
+iptables -I INPUT -s 77.43.61.43 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 88.87.70.54 -j DROP
+iptables -I INPUT -s 88.87.70.54 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.253.179.158 -j DROP
+iptables -I INPUT -s 117.253.179.158 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 218.4.111.78 -j DROP
+iptables -I INPUT -s 218.4.111.78 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 61.152.108.18 -j DROP
+iptables -I INPUT -s 61.152.108.18 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 200.85.91.101 -j DROP
+iptables -I INPUT -s 200.85.91.101 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 149.210.236.250 -j DROP
+iptables -I INPUT -s 149.210.236.250 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 115.206.31.157 -j DROP
+iptables -I INPUT -s 115.206.31.157 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 202.148.11.219 -j DROP
+iptables -I INPUT -s 202.148.11.219 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 218.200.188.213 -j DROP
+iptables -I INPUT -s 218.200.188.213 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 103.15.64.59 -j DROP
+iptables -I INPUT -s 103.15.64.59 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 103.11.117.142 -j DROP
+iptables -I INPUT -s 103.11.117.142 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 183.221.242.135 -j DROP
+iptables -I INPUT -s 183.221.242.135 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 178.138.32.199 -j DROP
+iptables -I INPUT -s 178.138.32.199 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 188.126.91.248 -j DROP
+iptables -I INPUT -s 188.126.91.248 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 125.16.240.194 -j DROP
+iptables -I INPUT -s 125.16.240.194 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 61.155.107.31 -j DROP
+iptables -I INPUT -s 61.155.107.31 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 186.101.2.131 -j DROP
+iptables -I INPUT -s 186.101.2.131 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 31.182.91.162 -j DROP
+iptables -I INPUT -s 31.182.91.162 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 62.210.220.210 -j DROP
+iptables -I INPUT -s 62.210.220.210 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 121.201.55.45 -j DROP
+iptables -I INPUT -s 121.201.55.45 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 201.249.231.59 -j DROP
+iptables -I INPUT -s 201.249.231.59 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 46.146.220.219 -j DROP
+iptables -I INPUT -s 46.146.220.219 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 61.147.107.109 -j DROP
+iptables -I INPUT -s 61.147.107.109 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 187.9.44.213 -j DROP
+iptables -I INPUT -s 187.9.44.213 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 78.69.0.64 -j DROP
+iptables -I INPUT -s 78.69.0.64 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 58.137.190.205 -j DROP
+iptables -I INPUT -s 58.137.190.205 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 163.53.247.165 -j DROP
+iptables -I INPUT -s 163.53.247.165 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 148.251.195.74 -j DROP
+iptables -I INPUT -s 148.251.195.74 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 46.246.12.92 -j DROP
+iptables -I INPUT -s 46.246.12.92 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 128.134.178.74 -j DROP
+iptables -I INPUT -s 128.134.178.74 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 198.23.194.242 -j DROP
+iptables -I INPUT -s 198.23.194.242 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 158.69.195.20 -j DROP
+iptables -I INPUT -s 158.69.195.20 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 199.180.118.66 -j DROP
+iptables -I INPUT -s 199.180.118.66 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 218.57.11.7 -j DROP
+iptables -I INPUT -s 218.57.11.7 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 124.41.233.169 -j DROP
+iptables -I INPUT -s 124.41.233.169 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 5.10.74.194 -j DROP
+iptables -I INPUT -s 5.10.74.194 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 219.153.15.122 -j DROP
+iptables -I INPUT -s 219.153.15.122 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 222.186.34.242 -j DROP
+iptables -I INPUT -s 222.186.34.242 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 119.167.153.187 -j DROP
+iptables -I INPUT -s 119.167.153.187 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 178.71.95.97 -j DROP
+iptables -I INPUT -s 178.71.95.97 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 80.82.64.127 -j DROP
+iptables -I INPUT -s 80.82.64.127 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 61.147.103.169 -j DROP
+iptables -I INPUT -s 61.147.103.169 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 95.173.162.19 -j DROP
+iptables -I INPUT -s 95.173.162.19 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 209.95.50.132 -j DROP
+iptables -I INPUT -s 209.95.50.132 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 222.44.63.11 -j DROP
+iptables -I INPUT -s 222.44.63.11 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 206.15.106.34 -j DROP
+iptables -I INPUT -s 206.15.106.34 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 58.249.125.90 -j DROP
+iptables -I INPUT -s 58.249.125.90 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 209.95.50.160 -j DROP
+iptables -I INPUT -s 209.95.50.160 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 188.126.91.101 -j DROP
+iptables -I INPUT -s 188.126.91.101 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 218.55.23.179 -j DROP
+iptables -I INPUT -s 218.55.23.179 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 125.211.217.34 -j DROP
+iptables -I INPUT -s 125.211.217.34 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 212.129.10.109 -j DROP
+iptables -I INPUT -s 212.129.10.109 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 184.73.51.87 -j DROP
+iptables -I INPUT -s 184.73.51.87 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 60.187.173.22 -j DROP
+iptables -I INPUT -s 60.187.173.22 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 106.57.13.47 -j DROP
+iptables -I INPUT -s 106.57.13.47 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 178.138.32.98 -j DROP
+iptables -I INPUT -s 178.138.32.98 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 51.254.133.166 -j DROP
+iptables -I INPUT -s 51.254.133.166 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 79.172.212.87 -j DROP
+iptables -I INPUT -s 79.172.212.87 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 61.135.137.2 -j DROP
+iptables -I INPUT -s 61.135.137.2 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 37.32.47.213 -j DROP
+iptables -I INPUT -s 37.32.47.213 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 219.144.198.62 -j DROP
+iptables -I INPUT -s 219.144.198.62 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 151.252.93.30 -j DROP
+iptables -I INPUT -s 151.252.93.30 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 130.204.32.192 -j DROP
+iptables -I INPUT -s 130.204.32.192 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 222.186.30.174 -j DROP
+iptables -I INPUT -s 222.186.30.174 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 202.198.129.78 -j DROP
+iptables -I INPUT -s 202.198.129.78 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 218.9.183.70 -j DROP
+iptables -I INPUT -s 218.9.183.70 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 58.218.211.38 -j DROP
+iptables -I INPUT -s 58.218.211.38 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.21.191.219 -j DROP
+iptables -I INPUT -s 117.21.191.219 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 222.169.193.162 -j DROP
+iptables -I INPUT -s 222.169.193.162 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 123.57.211.79 -j DROP
+iptables -I INPUT -s 123.57.211.79 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 178.73.218.75 -j DROP
+iptables -I INPUT -s 178.73.218.75 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 178.73.218.74 -j DROP
+iptables -I INPUT -s 178.73.218.74 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 165.90.193.3 -j DROP
+iptables -I INPUT -s 165.90.193.3 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 201.166.63.25 -j DROP
+iptables -I INPUT -s 201.166.63.25 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 202.97.152.235 -j DROP
+iptables -I INPUT -s 202.97.152.235 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 122.242.28.249 -j DROP
+iptables -I INPUT -s 122.242.28.249 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 180.210.201.106 -j DROP
+iptables -I INPUT -s 180.210.201.106 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 204.140.9.149 -j DROP
+iptables -I INPUT -s 204.140.9.149 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 62.173.8.2 -j DROP
+iptables -I INPUT -s 62.173.8.2 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 188.27.195.230 -j DROP
+iptables -I INPUT -s 188.27.195.230 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 46.246.80.214 -j DROP
+iptables -I INPUT -s 46.246.80.214 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 180.153.41.152 -j DROP
+iptables -I INPUT -s 180.153.41.152 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 183.104.233.7 -j DROP
+iptables -I INPUT -s 183.104.233.7 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 177.87.41.30 -j DROP
+iptables -I INPUT -s 177.87.41.30 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 173.65.67.76 -j DROP
+iptables -I INPUT -s 173.65.67.76 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 116.107.197.24 -j DROP
+iptables -I INPUT -s 116.107.197.24 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 95.139.176.24 -j DROP
+iptables -I INPUT -s 95.139.176.24 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 178.73.192.113 -j DROP
+iptables -I INPUT -s 178.73.192.113 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 103.10.84.92 -j DROP
+iptables -I INPUT -s 103.10.84.92 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 187.35.151.14 -j DROP
+iptables -I INPUT -s 187.35.151.14 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 182.18.54.205 -j DROP
+iptables -I INPUT -s 182.18.54.205 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 217.113.205.233 -j DROP
+iptables -I INPUT -s 217.113.205.233 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 31.193.169.163 -j DROP
+iptables -I INPUT -s 31.193.169.163 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 185.106.94.2 -j DROP
+iptables -I INPUT -s 185.106.94.2 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 43.229.53.56 -j DROP
+iptables -I INPUT -s 43.229.53.56 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 59.45.79.116 -j DROP
+iptables -I INPUT -s 59.45.79.116 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 178.73.219.186 -j DROP
+iptables -I INPUT -s 178.73.219.186 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 23.228.81.69 -j DROP
+iptables -I INPUT -s 23.228.81.69 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 46.246.86.148 -j DROP
+iptables -I INPUT -s 46.246.86.148 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 61.191.190.47 -j DROP
+iptables -I INPUT -s 61.191.190.47 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 187.50.71.54 -j DROP
+iptables -I INPUT -s 187.50.71.54 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 202.114.72.243 -j DROP
+iptables -I INPUT -s 202.114.72.243 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 31.79.30.125 -j DROP
+iptables -I INPUT -s 31.79.30.125 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 46.146.220.220 -j DROP
+iptables -I INPUT -s 46.146.220.220 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 88.63.48.10 -j DROP
+iptables -I INPUT -s 88.63.48.10 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 208.80.80.157 -j DROP
+iptables -I INPUT -s 208.80.80.157 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 152.249.252.181 -j DROP
+iptables -I INPUT -s 152.249.252.181 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 84.24.169.13 -j DROP
+iptables -I INPUT -s 84.24.169.13 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 45.35.52.220 -j DROP
+iptables -I INPUT -s 45.35.52.220 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 116.110.124.250 -j DROP
+iptables -I INPUT -s 116.110.124.250 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 178.138.33.105 -j DROP
+iptables -I INPUT -s 178.138.33.105 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 81.145.145.11 -j DROP
+iptables -I INPUT -s 81.145.145.11 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 113.190.7.182 -j DROP
+iptables -I INPUT -s 113.190.7.182 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 23.249.163.133 -j DROP
+iptables -I INPUT -s 23.249.163.133 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 27.254.96.92 -j DROP
+iptables -I INPUT -s 27.254.96.92 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 118.193.221.215 -j DROP
+iptables -I INPUT -s 118.193.221.215 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 185.22.172.116 -j DROP
+iptables -I INPUT -s 185.22.172.116 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 84.200.82.10 -j DROP
+iptables -I INPUT -s 84.200.82.10 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 194.150.15.192 -j DROP
+iptables -I INPUT -s 194.150.15.192 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 158.255.6.230 -j DROP
+iptables -I INPUT -s 158.255.6.230 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 189.51.104.180 -j DROP
+iptables -I INPUT -s 189.51.104.180 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 91.151.210.180 -j DROP
+iptables -I INPUT -s 91.151.210.180 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 107.150.19.184 -j DROP
+iptables -I INPUT -s 107.150.19.184 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 2.60.26.57 -j DROP
+iptables -I INPUT -s 2.60.26.57 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 107.181.168.100 -j DROP
+iptables -I INPUT -s 107.181.168.100 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 109.166.139.114 -j DROP
+iptables -I INPUT -s 109.166.139.114 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 95.54.0.59 -j DROP
+iptables -I INPUT -s 95.54.0.59 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 37.237.35.178 -j DROP
+iptables -I INPUT -s 37.237.35.178 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 43.229.53.15 -j DROP
+iptables -I INPUT -s 43.229.53.15 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 61.139.54.71 -j DROP
+iptables -I INPUT -s 61.139.54.71 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 113.195.145.12 -j DROP
+iptables -I INPUT -s 113.195.145.12 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 123.25.21.23 -j DROP
+iptables -I INPUT -s 123.25.21.23 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 43.229.53.14 -j DROP
+iptables -I INPUT -s 43.229.53.14 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 107.150.20.53 -j DROP
+iptables -I INPUT -s 107.150.20.53 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 169.54.91.220 -j DROP
+iptables -I INPUT -s 169.54.91.220 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 67.231.28.136 -j DROP
+iptables -I INPUT -s 67.231.28.136 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 208.67.1.120 -j DROP
+iptables -I INPUT -s 208.67.1.120 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 46.183.219.84 -j DROP
+iptables -I INPUT -s 46.183.219.84 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 221.203.142.70 -j DROP
+iptables -I INPUT -s 221.203.142.70 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 222.170.86.114 -j DROP
+iptables -I INPUT -s 222.170.86.114 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 132.248.94.130 -j DROP
+iptables -I INPUT -s 132.248.94.130 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 178.73.192.246 -j DROP
+iptables -I INPUT -s 178.73.192.246 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 118.194.243.249 -j DROP
+iptables -I INPUT -s 118.194.243.249 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 5.10.78.52 -j DROP
+iptables -I INPUT -s 5.10.78.52 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 60.173.14.5 -j DROP
+iptables -I INPUT -s 60.173.14.5 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 14.177.97.240 -j DROP
+iptables -I INPUT -s 14.177.97.240 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 27.76.224.116 -j DROP
+iptables -I INPUT -s 27.76.224.116 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 61.136.171.198 -j DROP
+iptables -I INPUT -s 61.136.171.198 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 218.87.109.253 -j DROP
+iptables -I INPUT -s 218.87.109.253 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 5.10.78.54 -j DROP
+iptables -I INPUT -s 5.10.78.54 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 186.224.89.151 -j DROP
+iptables -I INPUT -s 186.224.89.151 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 31.168.207.1 -j DROP
+iptables -I INPUT -s 31.168.207.1 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 108.175.9.98 -j DROP
+iptables -I INPUT -s 108.175.9.98 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 46.246.12.221 -j DROP
+iptables -I INPUT -s 46.246.12.221 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 124.132.241.220 -j DROP
+iptables -I INPUT -s 124.132.241.220 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 202.120.31.138 -j DROP
+iptables -I INPUT -s 202.120.31.138 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 218.248.13.234 -j DROP
+iptables -I INPUT -s 218.248.13.234 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 208.78.162.159 -j DROP
+iptables -I INPUT -s 208.78.162.159 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 113.106.129.219 -j DROP
+iptables -I INPUT -s 113.106.129.219 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 92.27.218.239 -j DROP
+iptables -I INPUT -s 92.27.218.239 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 222.186.56.42 -j DROP
+iptables -I INPUT -s 222.186.56.42 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 1.93.51.221 -j DROP
+iptables -I INPUT -s 1.93.51.221 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 222.186.21.208 -j DROP
+iptables -I INPUT -s 222.186.21.208 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 138.122.47.15 -j DROP
+iptables -I INPUT -s 138.122.47.15 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 31.184.195.115 -j DROP
+iptables -I INPUT -s 31.184.195.115 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 183.136.130.194 -j DROP
+iptables -I INPUT -s 183.136.130.194 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 86.209.212.68 -j DROP
+iptables -I INPUT -s 86.209.212.68 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 178.155.89.232 -j DROP
+iptables -I INPUT -s 178.155.89.232 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 118.123.167.67 -j DROP
+iptables -I INPUT -s 118.123.167.67 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 46.246.82.78 -j DROP
+iptables -I INPUT -s 46.246.82.78 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 183.157.4.153 -j DROP
+iptables -I INPUT -s 183.157.4.153 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 208.101.81.139 -j DROP
+iptables -I INPUT -s 208.101.81.139 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 24.172.189.104 -j DROP
+iptables -I INPUT -s 24.172.189.104 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 59.47.0.157 -j DROP
+iptables -I INPUT -s 59.47.0.157 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 2.92.108.43 -j DROP
+iptables -I INPUT -s 2.92.108.43 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 188.64.171.181 -j DROP
+iptables -I INPUT -s 188.64.171.181 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 37.32.43.196 -j DROP
+iptables -I INPUT -s 37.32.43.196 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 194.63.143.89 -j DROP
+iptables -I INPUT -s 194.63.143.89 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 61.144.43.70 -j DROP
+iptables -I INPUT -s 61.144.43.70 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 103.3.47.4 -j DROP
+iptables -I INPUT -s 103.3.47.4 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 188.26.95.222 -j DROP
+iptables -I INPUT -s 188.26.95.222 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 91.201.236.114 -j DROP
+iptables -I INPUT -s 91.201.236.114 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 94.79.33.21 -j DROP
+iptables -I INPUT -s 94.79.33.21 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 62.245.45.132 -j DROP
+iptables -I INPUT -s 62.245.45.132 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 185.112.102.222 -j DROP
+iptables -I INPUT -s 185.112.102.222 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 104.14.184.84 -j DROP
+iptables -I INPUT -s 104.14.184.84 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 91.105.139.20 -j DROP
+iptables -I INPUT -s 91.105.139.20 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 81.212.109.229 -j DROP
+iptables -I INPUT -s 81.212.109.229 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 113.175.95.180 -j DROP
+iptables -I INPUT -s 113.175.95.180 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 46.246.80.201 -j DROP
+iptables -I INPUT -s 46.246.80.201 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 115.85.192.40 -j DROP
+iptables -I INPUT -s 115.85.192.40 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 103.57.111.93 -j DROP
+iptables -I INPUT -s 103.57.111.93 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 218.100.84.132 -j DROP
+iptables -I INPUT -s 218.100.84.132 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 61.139.5.22 -j DROP
+iptables -I INPUT -s 61.139.5.22 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 220.184.174.53 -j DROP
+iptables -I INPUT -s 220.184.174.53 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 85.159.37.173 -j DROP
+iptables -I INPUT -s 85.159.37.173 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 178.70.252.22 -j DROP
+iptables -I INPUT -s 178.70.252.22 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 177.200.36.136 -j DROP
+iptables -I INPUT -s 177.200.36.136 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 185.7.80.17 -j DROP
+iptables -I INPUT -s 185.7.80.17 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 219.136.251.48 -j DROP
+iptables -I INPUT -s 219.136.251.48 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.18.75.245 -j DROP
+iptables -I INPUT -s 117.18.75.245 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 46.246.82.27 -j DROP
+iptables -I INPUT -s 46.246.82.27 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.79.130.206 -j DROP
+iptables -I INPUT -s 117.79.130.206 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 213.152.28.13 -j DROP
+iptables -I INPUT -s 213.152.28.13 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 104.233.103.3 -j DROP
+iptables -I INPUT -s 104.233.103.3 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.27.144.63 -j DROP
+iptables -I INPUT -s 117.27.144.63 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 60.173.12.98 -j DROP
+iptables -I INPUT -s 60.173.12.98 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 14.139.107.211 -j DROP
+iptables -I INPUT -s 14.139.107.211 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 46.246.82.169 -j DROP
+iptables -I INPUT -s 46.246.82.169 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 222.186.42.207 -j DROP
+iptables -I INPUT -s 222.186.42.207 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 210.13.121.52 -j DROP
+iptables -I INPUT -s 210.13.121.52 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 199.119.206.102 -j DROP
+iptables -I INPUT -s 199.119.206.102 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 46.246.86.55 -j DROP
+iptables -I INPUT -s 46.246.86.55 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 187.109.179.220 -j DROP
+iptables -I INPUT -s 187.109.179.220 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 173.208.208.58 -j DROP
+iptables -I INPUT -s 173.208.208.58 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 121.42.53.34 -j DROP
+iptables -I INPUT -s 121.42.53.34 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 59.45.79.41 -j DROP
+iptables -I INPUT -s 59.45.79.41 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 31.43.145.92 -j DROP
+iptables -I INPUT -s 31.43.145.92 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 31.43.145.91 -j DROP
+iptables -I INPUT -s 31.43.145.91 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 188.42.136.164 -j DROP
+iptables -I INPUT -s 188.42.136.164 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 88.249.106.23 -j DROP
+iptables -I INPUT -s 88.249.106.23 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 197.157.244.243 -j DROP
+iptables -I INPUT -s 197.157.244.243 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 192.221.93.5 -j DROP
+iptables -I INPUT -s 192.221.93.5 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 188.126.90.74 -j DROP
+iptables -I INPUT -s 188.126.90.74 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 185.106.94.17 -j DROP
+iptables -I INPUT -s 185.106.94.17 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 59.45.79.55 -j DROP
+iptables -I INPUT -s 59.45.79.55 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 85.105.176.183 -j DROP
+iptables -I INPUT -s 85.105.176.183 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 118.129.166.196 -j DROP
+iptables -I INPUT -s 118.129.166.196 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 185.106.94.126 -j DROP
+iptables -I INPUT -s 185.106.94.126 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 61.155.203.54 -j DROP
+iptables -I INPUT -s 61.155.203.54 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 197.14.49.22 -j DROP
+iptables -I INPUT -s 197.14.49.22 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 61.51.18.101 -j DROP
+iptables -I INPUT -s 61.51.18.101 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 177.92.137.251 -j DROP
+iptables -I INPUT -s 177.92.137.251 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 82.27.194.161 -j DROP
+iptables -I INPUT -s 82.27.194.161 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 221.179.89.90 -j DROP
+iptables -I INPUT -s 221.179.89.90 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 198.101.221.14 -j DROP
+iptables -I INPUT -s 198.101.221.14 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 223.96.210.63 -j DROP
+iptables -I INPUT -s 223.96.210.63 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 46.246.86.144 -j DROP
+iptables -I INPUT -s 46.246.86.144 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 62.210.214.89 -j DROP
+iptables -I INPUT -s 62.210.214.89 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 62.4.15.46 -j DROP
+iptables -I INPUT -s 62.4.15.46 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 46.246.80.205 -j DROP
+iptables -I INPUT -s 46.246.80.205 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 148.251.130.91 -j DROP
+iptables -I INPUT -s 148.251.130.91 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 125.212.226.190 -j DROP
+iptables -I INPUT -s 125.212.226.190 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 70.184.6.149 -j DROP
+iptables -I INPUT -s 70.184.6.149 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 176.98.119.99 -j DROP
+iptables -I INPUT -s 176.98.119.99 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 223.105.1.23 -j DROP
+iptables -I INPUT -s 223.105.1.23 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 5.137.57.148 -j DROP
+iptables -I INPUT -s 5.137.57.148 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 46.246.4.212 -j DROP
+iptables -I INPUT -s 46.246.4.212 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 60.185.215.71 -j DROP
+iptables -I INPUT -s 60.185.215.71 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 208.96.135.226 -j DROP
+iptables -I INPUT -s 208.96.135.226 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 175.44.218.40 -j DROP
+iptables -I INPUT -s 175.44.218.40 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 158.69.215.239 -j DROP
+iptables -I INPUT -s 158.69.215.239 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 221.6.233.62 -j DROP
+iptables -I INPUT -s 221.6.233.62 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 185.130.5.207 -j DROP
+iptables -I INPUT -s 185.130.5.207 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 216.18.232.114 -j DROP
+iptables -I INPUT -s 216.18.232.114 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 58.215.79.200 -j DROP
+iptables -I INPUT -s 58.215.79.200 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 166.78.63.60 -j DROP
+iptables -I INPUT -s 166.78.63.60 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 116.110.127.19 -j DROP
+iptables -I INPUT -s 116.110.127.19 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 114.214.170.119 -j DROP
+iptables -I INPUT -s 114.214.170.119 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 168.62.174.240 -j DROP
+iptables -I INPUT -s 168.62.174.240 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 59.45.79.39 -j DROP
+iptables -I INPUT -s 59.45.79.39 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 139.159.118.166 -j DROP
+iptables -I INPUT -s 139.159.118.166 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 104.200.78.34 -j DROP
+iptables -I INPUT -s 104.200.78.34 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 37.48.108.209 -j DROP
+iptables -I INPUT -s 37.48.108.209 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 185.7.81.11 -j DROP
+iptables -I INPUT -s 185.7.81.11 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 177.86.66.8 -j DROP
+iptables -I INPUT -s 177.86.66.8 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 106.241.15.63 -j DROP
+iptables -I INPUT -s 106.241.15.63 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 119.146.221.68 -j DROP
+iptables -I INPUT -s 119.146.221.68 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 146.0.75.5 -j DROP
+iptables -I INPUT -s 146.0.75.5 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 40.117.47.185 -j DROP
+iptables -I INPUT -s 40.117.47.185 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 42.249.182.226 -j DROP
+iptables -I INPUT -s 42.249.182.226 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 116.107.197.46 -j DROP
+iptables -I INPUT -s 116.107.197.46 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 113.87.51.24 -j DROP
+iptables -I INPUT -s 113.87.51.24 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.253.174.99 -j DROP
+iptables -I INPUT -s 117.253.174.99 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 191.243.58.58 -j DROP
+iptables -I INPUT -s 191.243.58.58 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.253.218.163 -j DROP
+iptables -I INPUT -s 117.253.218.163 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 72.167.29.152 -j DROP
+iptables -I INPUT -s 72.167.29.152 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 110.36.42.163 -j DROP
+iptables -I INPUT -s 110.36.42.163 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 222.186.31.46 -j DROP
+iptables -I INPUT -s 222.186.31.46 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 109.161.198.84 -j DROP
+iptables -I INPUT -s 109.161.198.84 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 117.243.176.67 -j DROP
+iptables -I INPUT -s 117.243.176.67 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 178.64.174.58 -j DROP
+iptables -I INPUT -s 178.64.174.58 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 213.178.223.165 -j DROP
+iptables -I INPUT -s 213.178.223.165 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 182.72.26.6 -j DROP
+iptables -I INPUT -s 182.72.26.6 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 200.216.103.155 -j DROP
+iptables -I INPUT -s 200.216.103.155 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 185.130.5.233 -j DROP
+iptables -I INPUT -s 185.130.5.233 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 109.86.1.36 -j DROP
+iptables -I INPUT -s 109.86.1.36 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 23.94.153.178 -j DROP
+iptables -I INPUT -s 23.94.153.178 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 107.183.79.41 -j DROP
+iptables -I INPUT -s 107.183.79.41 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 122.141.236.69 -j DROP
+iptables -I INPUT -s 122.141.236.69 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 63.141.250.154 -j DROP
+iptables -I INPUT -s 63.141.250.154 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 118.192.155.19 -j DROP
+iptables -I INPUT -s 118.192.155.19 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 14.175.44.84 -j DROP
+iptables -I INPUT -s 14.175.44.84 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 70.43.84.131 -j DROP
+iptables -I INPUT -s 70.43.84.131 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 95.110.245.209 -j DROP
+iptables -I INPUT -s 95.110.245.209 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 185.70.187.226 -j DROP
+iptables -I INPUT -s 185.70.187.226 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 185.29.9.164 -j DROP
+iptables -I INPUT -s 185.29.9.164 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 67.231.28.190 -j DROP
+iptables -I INPUT -s 67.231.28.190 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 89.248.169.23 -j DROP
+iptables -I INPUT -s 89.248.169.23 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 116.110.127.232 -j DROP
+iptables -I INPUT -s 116.110.127.232 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 208.67.1.11 -j DROP
+iptables -I INPUT -s 208.67.1.11 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 222.186.21.80 -j DROP
+iptables -I INPUT -s 222.186.21.80 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 61.0.251.20 -j DROP
+iptables -I INPUT -s 61.0.251.20 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 91.232.157.13 -j DROP
+iptables -I INPUT -s 91.232.157.13 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 94.102.50.39 -j DROP
+iptables -I INPUT -s 94.102.50.39 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 210.45.250.3 -j DROP
+iptables -I INPUT -s 210.45.250.3 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 62.210.204.102 -j DROP
+iptables -I INPUT -s 62.210.204.102 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 185.93.187.61 -j DROP
+iptables -I INPUT -s 185.93.187.61 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 164.177.154.213 -j DROP
+iptables -I INPUT -s 164.177.154.213 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 108.59.250.101 -j DROP
+iptables -I INPUT -s 108.59.250.101 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 191.239.0.148 -j DROP
+iptables -I INPUT -s 191.239.0.148 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 202.215.160.22 -j DROP
+iptables -I INPUT -s 202.215.160.22 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 222.186.42.46 -j DROP
+iptables -I INPUT -s 222.186.42.46 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 104.43.226.219 -j DROP
+iptables -I INPUT -s 104.43.226.219 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 59.63.188.44 -j DROP
+iptables -I INPUT -s 59.63.188.44 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 91.236.74.6 -j DROP
+iptables -I INPUT -s 91.236.74.6 -j LOG --log-prefix '[Blocked IP]'
+iptables -I INPUT -s 200.2.102.125 -j DROP
+iptables -I INPUT -s 200.2.102.125 -j LOG --log-prefix '[Blocked IP]'
