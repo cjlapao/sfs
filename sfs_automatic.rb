@@ -5,9 +5,9 @@
 #
 #author: Carlos Lapao
 #Ver: 0.4.1
-#rev: 1
+#rev: 100
 #all rights reserved
-#changed online
+# github ready
 
 # TODO:
 # - Implementing cli and colorize better the output of the system
