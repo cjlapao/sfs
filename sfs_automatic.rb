@@ -4,9 +4,10 @@
 # iptables rules to block the attempts to login
 #
 #author: Carlos Lapao
-#Ver: 0.4.0
+#Ver: 0.4.1
 #rev: 1
 #all rights reserved
+#changed online
 
 # TODO:
 # - Implementing cli and colorize better the output of the system
