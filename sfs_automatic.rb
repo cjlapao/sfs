@@ -2,10 +2,9 @@
 # Secure firewall analyser
 # Will check for the log created by the secure file and add
 # iptables rules to block the attempts to login
-#
+
 #author: Carlos Lapao
-#Ver: 0.4.1
-#rev: 100
+#Ver: 0.2.1.100
 #all rights reserved
 # github ready
 
