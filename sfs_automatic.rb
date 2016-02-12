@@ -27,6 +27,7 @@ $_smtpuser
 $_smtppasswd
 $_email
 $_execdir
+$last_ip
 
 # Checking if we have all the software necessary to run the script and will abort
 # in case there's anything missing
@@ -300,39 +301,46 @@ class Open_log
 	# Activating countermeasures on the abusing ip
 	def countermeasures(_ip)
 		_out = ""
-		IO.popen("sudo iptables -nL INPUT | grep #{_ip}"){|_io|
-			# trying to pause so th iptables can update and not create a duplicate rule
-			_out = _io.readlines
-			_io.close
-		}
-		if _out.size == 0
-			puts "\r\e[0;37miptables rule not found applying \t\t\t\t\e[0;32m[DONE]\e[0m"
-			IO.popen("iptables -I INPUT -s #{_ip} -j DROP"){|_io| _io.close}
-			IO.popen("iptables -I INPUT -s #{_ip} -j LOG --log-prefix '[Blocked IP]'"){|_io| _io.close}
-			if File.exist?("#{$_custom_path}/custom")
-				_file = File.open("#{$_custom_path}/custom","a")
-			else
-				_file =  File.open("#{$_custom_path}/custom","w")
-			end
-			#after opening the custom firewall file we will be  checking if this
-			#rule has already been logged on it.
-			$custom = Array.new
-			$exists = false
-			File.foreach("#{$_custom_path}/custom").with_index do |line, linenum|
-				if line == "iptables -I INPUT -s #{_ip} -j DROP"
-					$exists = true
+		# Checking if the ip is the same as last attact, this will reduce the
+		# stress on the script on big amounts of attacks
+		if $last_ip <> _ip
+			puts "\r\e[0;37mNew attack ip searching IPTABLES db\e[0m"
+			IO.popen("sudo iptables -nwL INPUT | grep #{_ip}"){|_io|
+				# trying to pause so th iptables can update and not create a duplicate rule
+				_out = _io.readlines
+				_io.close
+			}
+			if _out.size == 0
+				puts "\r\e[0;37miptables rule not found applying \t\t\t\t\e[0;32m[DONE]\e[0m"
+				IO.popen("sudo iptables -I INPUT -s #{_ip} -j DROP"){|_io| _io.close}
+				IO.popen("sudo iptables -I INPUT -s #{_ip} -j LOG --log-prefix '[Blocked IP]'"){|_io| _io.close}
+				if File.exist?("#{$_custom_path}/custom")
+					_file = File.open("#{$_custom_path}/custom","a")
+				else
+					_file =  File.open("#{$_custom_path}/custom","w")
 				end
+				#after opening the custom firewall file we will be  checking if this
+				#rule has already been logged on it.
+				$custom = Array.new
+				$exists = false
+				File.foreach("#{$_custom_path}/custom").with_index do |line, linenum|
+					if line == "sudo iptables -I INPUT -s #{_ip} -j DROP"
+						$exists = true
+					end
+				end
+				if $exists == false
+					_file.write("sudo iptables -I INPUT -s #{_ip} -j DROP\n")
+					_file.write("sudo iptables -I INPUT -s #{_ip} -j LOG --log-prefix '[Blocked IP]'\n")
+				end
+				#closing the file
+				_file.close
+				puts "\r\e[0;37miptables logged and saved \t\t\t\t\t\e[0;32m[DONE]\e[0m"
+				sendmail(0,_ip)
+			else
+				puts "\r\e[0;33mRule already exists. \e[0;32m[DONE]\e[0m"
 			end
-			if $exists == false
-				_file.write("iptables -I INPUT -s #{_ip} -j DROP\n")
-				_file.write("iptables -I INPUT -s #{_ip} -j LOG --log-prefix '[Blocked IP]'\n")
-			end
-			#closing the file
-			_file.close
-			puts "\r\e[0;37miptables logged and saved \t\t\t\t\t\e[0;32m[DONE]\e[0m"
-			sendmail(0,_ip)
 		else
-			puts "\r\e[0;33mRule already exists. \e[0;32m[DONE]\e[0m"
+			puts "\r\e[0;33mSame ip attack as last, skipping\e[0m"
 		end
 	end
 	def sendmail(_index,_ip)
