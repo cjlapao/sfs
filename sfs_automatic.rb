@@ -303,14 +303,15 @@ class Open_log
 		_out = ""
 		# Checking if the ip is the same as last attact, this will reduce the
 		# stress on the script on big amounts of attacks
-		if $last_ip <> _ip
+		if $last_ip != _ip
 			puts "\r\e[0;37mNew attack ip searching IPTABLES db\e[0m"
-			IO.popen("sudo iptables -nwL INPUT | grep #{_ip}"){|_io|
+			IO.popen("sudo iptables -w40 -nL INPUT | grep #{_ip}"){|_io|
 				# trying to pause so th iptables can update and not create a duplicate rule
 				_out = _io.readlines
 				_io.close
 			}
 			if _out.size == 0
+				$last_ip = _ip
 				puts "\r\e[0;37miptables rule not found applying \t\t\t\t\e[0;32m[DONE]\e[0m"
 				IO.popen("sudo iptables -I INPUT -s #{_ip} -j DROP"){|_io| _io.close}
 				IO.popen("sudo iptables -I INPUT -s #{_ip} -j LOG --log-prefix '[Blocked IP]'"){|_io| _io.close}
