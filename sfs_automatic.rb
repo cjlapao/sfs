@@ -56,8 +56,8 @@ class Open_log
 	def initialize(filepath, filename)
 		@filename = filename
 		@filepath = filepath
-#		@@file = @filepath+"/"+@filename
 		@@file = $_execdir+"/"+@filename
+		puts @@file
 	end
 	# Checking if the selected file exists and trying to open it
 	def check_file()
@@ -116,9 +116,9 @@ class Open_log
 	def analise
 		if check_file == true
 			taillog = Thread.new do
-				if File.exists?("#{$_execdir}/secure_pipe.log")
-					File.delete("#{$_execdir}/secure_pipe.log")
-				end
+#				if File.exists?("#{$_execdir}/secure.log")
+#					File.delete("#{$_execdir}/secure.log")
+#				end
 				IO.popen("tail -n 1 -F /var/log/secure > secure.log")
 			end
 			t = Thread.new do
@@ -128,7 +128,9 @@ class Open_log
 				while true
 					select([@@log])
 					_line = @@log.gets
-					vectors(_line, _index) if _line.nil?  == false
+					if not _line.nil?
+						vectors(_line, _index)
+					end
 					sleep(0.5)
 				end
 			end
@@ -399,7 +401,7 @@ if File.exist?("settings.conf")
 			Dir.chdir "#{_line[_line.index('=')+1.._line.length-2]}"
 			$_execdir = _line[_line.index('=')+1.._line.length-2]
 		end
-		if _line.include?('filepath=')
+		if _line.include?('filename=')
 			$filename = _line[_line.index('=')+1.._line.length-2]
 		end
 		if _line.include?('custom_path=')
@@ -451,10 +453,15 @@ else
 end
 
 puts "\e[0;32mCreating temporary log file\e[0m"
-if !File.exist?("#{$filename}")
-	_temp_log = File.open("secure.log","w")
+if !File.exist?("#{$_execdir}/#{$filename}")
+	_temp_log = File.open("#{$_execdir}/#{$filename}","w")
 	_temp_log.write("#temporary log file")
 	_temp_log.close
+else
+	File.delete("#{$_execdir}/#{$filename}")
+        _temp_log = File.open("#{$_execdir}/#{$filename}","w")
+        _temp_log.write("#temporary log file")
+        _temp_log.close
 end
 
 l = Open_log.new($_path,$filename)
@@ -467,5 +474,3 @@ l.analise
 puts "finished analysing and found #{$failcount} incidents"
 
 l.savelog
-
-File.delete("#{$filename}")
